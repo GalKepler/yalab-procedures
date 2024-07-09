@@ -84,3 +84,8 @@ class MinimalPreprocProcedure(Procedure):
         if isdefined(self.inputs.bids_filters):
             with open(self.inputs.bids_filters, "r") as f:
                 self.inputs.bids_filters = json.load(f)
+
+    def _collect_subject_data(self):
+        """
+        Collect subject data.
+        """
