@@ -57,6 +57,13 @@ class Procedure(BaseInterface):
         # Run the custom procedure
         self.run_procedure(**self.inputs.__dict__)
 
+        # create another log file, including the timestamp of the finished procedure
+        finished_file = (
+            Path(self.inputs.logging_directory) / f"{type(self).__name__}.done"
+        )
+        with open(finished_file, "w") as f:
+            f.write(f"{datetime.now()}\n")
+
         return runtime
 
     def _list_outputs(self) -> Dict[str, str]:
