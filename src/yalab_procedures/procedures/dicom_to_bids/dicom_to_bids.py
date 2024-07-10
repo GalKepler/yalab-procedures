@@ -43,7 +43,7 @@ class DicomToBidsInputSpec(ProcedureInputSpec, CommandLineInputSpec):
         desc="Input directory containing DICOM files",
     )
     output_directory = Directory(
-        exists=True,
+        exists=False,
         mandatory=True,
         argstr="-o %s",
         desc="Directory to store BIDS output",
@@ -126,7 +126,10 @@ class DicomToBidsProcedure(Procedure, CommandLine):
             text=True,
         )
         self.logger.info(result.stdout)
-        if result.stderr:
+        if (
+            result.stderr
+            and "TypeError: 'NoneType' object is not iterable" not in result.stderr
+        ):
             self.logger.error(result.stderr)
             raise CalledProcessError(
                 result.returncode, command, output=result.stdout, stderr=result.stderr
