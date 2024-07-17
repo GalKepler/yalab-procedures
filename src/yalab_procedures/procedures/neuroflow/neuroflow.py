@@ -1,5 +1,6 @@
 # src/yalab_procedures/procedures/dicom_to_bids.py
 
+from pathlib import Path
 from subprocess import CalledProcessError, run
 
 from nipype.interfaces.base import (
@@ -146,6 +147,7 @@ class NeuroflowProcedure(Procedure, CommandLine):
     _cmd = "neuroflow process"
     input_spec = NeuroflowInputSpec
     output_spec = NeuroflowOutputSpec
+    _version = "0.0.1"
 
     def __init__(self, **inputs):
         super(NeuroflowProcedure, self).__init__(**inputs)
@@ -179,6 +181,28 @@ class NeuroflowProcedure(Procedure, CommandLine):
                 result.returncode, command, output=result.stdout, stderr=result.stderr
             )
         self.logger.info("Finished running NeuroflowProcedure")
+
+    def infer_subject_id(self):
+        """
+        Infer the subject ID from the input directory
+
+        Returns
+        -------
+        str
+            The subject ID
+        """
+        return Path(self.inputs.input_directory).parent.name
+
+    def infer_session_id(self):
+        """
+        Infer the session ID from the input directory
+
+        Returns
+        -------
+        str
+            The session ID
+        """
+        return Path(self.inputs.input_directory).name
 
     def _list_outputs(self):
         """

@@ -98,6 +98,7 @@ class DicomToBidsProcedure(Procedure, CommandLine):
     _cmd = "heudiconv"
     input_spec = DicomToBidsInputSpec
     output_spec = DicomToBidsOutputSpec
+    _version = "0.0.1"
 
     def __init__(self, **inputs):
         super(DicomToBidsProcedure, self).__init__(**inputs)
