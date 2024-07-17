@@ -1,10 +1,11 @@
 import nipype.pipeline.engine as pe
-from nipype.interfaces import utility as niu
-from nipype.interfaces.utility import Function, IdentityInterface
+from bids.layout import BIDSLayout
+from nipype.interfaces.utility import IdentityInterface
+
 from yalab_procedures.interfaces.data_grabber.basic_requirements import (
     CollectRequiredInputs,
 )
-from bids.layout import BIDSLayout
+from yalab_procedures.procedures.smriprep.smriprep import SmriprepProcedure
 
 
 def collect_required_inputs(subject_data: dict) -> tuple:
@@ -48,8 +49,9 @@ def collect_required_inputs(subject_data: dict) -> tuple:
 
 
 def init_minimal_preproc_wf(
-    name: str,
     subject_data: dict,
+    layout: BIDSLayout,
+    name: str = "minimal_preproc_wf",
 ) -> pe.Workflow:
     """
     Create a minimal preprocessing workflow.
@@ -65,15 +67,16 @@ def init_minimal_preproc_wf(
                 "work_directory",
                 "subject_id",
                 "session_id",
-                "do_smriprep",
                 "subject_data",
+                "bids_filters",
+                "fs_license_file",
+                "force",
             ]
         ),
         name="inputnode",
     )
 
     # BIDS
-    # inputnode.inputs.layout = layout
     inputnode.inputs.subject_data = subject_data
 
     # Collect required inputs
@@ -88,4 +91,24 @@ def init_minimal_preproc_wf(
         ]
     )
 
+    # Smriprep
+    smriprep = pe.Node(SmriprepProcedure(), name="smriprep")
+
+    wf.connect(
+        [
+            (
+                inputnode,
+                smriprep,
+                [
+                    ("bids_directory", "input_directory"),
+                    ("output_directory", "output_directory"),
+                    ("work_directory", "work_directory"),
+                    ("subject_id", "participant_label"),
+                    ("bids_filters", "bids_filters"),
+                    ("fs_license_file", "fs_license_file"),
+                    ("force", "force"),
+                ],
+            ),
+        ]
+    )
     return wf

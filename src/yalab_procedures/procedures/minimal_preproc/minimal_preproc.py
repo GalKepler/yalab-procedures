@@ -1,14 +1,13 @@
 import json
 
 from nipype.interfaces.base import Directory, isdefined, traits
+from niworkflows.utils.bids import collect_data
 
 from yalab_procedures.procedures.base.procedure import (
     Procedure,
     ProcedureInputSpec,
     ProcedureOutputSpec,
 )
-from niworkflows.utils.bids import collect_data
-
 from yalab_procedures.procedures.minimal_preproc.workflows.base import (
     init_minimal_preproc_wf,
 )
@@ -43,16 +42,10 @@ class MinimalPreprocInputSpec(ProcedureInputSpec):
         desc="Working directory",
     )
     # BIDS filters should either be a json file or a dictionary
-
     bids_filters = traits.Either(
         traits.Dict,
         traits.File(exists=True),
         desc="BIDS filters",
-    )
-    do_smriprep = traits.Bool(
-        False,
-        usedefault=True,
-        desc="Whether to run sMRIPrep on the anatomical data.",
     )
 
 
