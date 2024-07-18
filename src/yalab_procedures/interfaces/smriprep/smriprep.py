@@ -1,10 +1,10 @@
 from nipype.interfaces.base import (
     BaseInterface,
     BaseInterfaceInputSpec,
+    CommandLine,
+    CommandLineInputSpec,
     TraitedSpec,
     traits,
-    CommandLineInputSpec,
-    CommandLine,
 )
 
 
@@ -95,7 +95,6 @@ class SmriprepInterface(BaseInterface, CommandLine):
 
     def __init__(self, **inputs: dict):
         super().__init__(**inputs)
-
 
     def _format_arg(self, name, spec, value):
         return super()._format_arg(name, spec, value)

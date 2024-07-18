@@ -2,12 +2,15 @@ from pathlib import Path
 from typing import Union
 
 from bids import BIDSLayout
-from bids.layout import parse_file_entities
 from nipype.interfaces import utility as niu
 from nipype.pipeline import engine as pe
 
+from yalab_procedures.interfaces.bids import get_fieldmap
 from yalab_procedures.procedures.minimal_preproc.workflows.dwi.sub_workflows.coregistration import (
     init_dwi_coregister_wf,
+)
+from yalab_procedures.procedures.minimal_preproc.workflows.dwi.sub_workflows.derivatives import (
+    init_derivatives_wf,
 )
 from yalab_procedures.procedures.minimal_preproc.workflows.dwi.sub_workflows.eddy import (
     init_eddy_wf,
@@ -16,45 +19,9 @@ from yalab_procedures.procedures.minimal_preproc.workflows.dwi.sub_workflows.pos
     init_post_eddy_wf,
 )
 
-# from keprep.workflows.dwi.stages.coregister import init_dwi_coregister_wf
-# from keprep.workflows.dwi.stages.derivatives import init_derivatives_wf
-# from keprep.workflows.dwi.stages.eddy import init_eddy_wf
-# from keprep.workflows.dwi.stages.post_eddy import init_post_eddy_wf
-
-
-def get_fieldmap(dwi_file: Union[str, Path], subject_data: dict) -> str:
-    """
-    Locate the fieldmap (dir-PA) associated with the dwi file of the session
-
-    Parameters
-    ----------
-    dwi_file : Union[str,Path]
-        path to DWI file
-    subject_data : dict
-        subject data
-
-    Returns
-    -------
-    str
-        path to the fieldmap file
-    """
-    dwi_entities = parse_file_entities(dwi_file)
-    dwi_dir = dwi_entities["direction"]
-    fmap_dir = dwi_dir[::-1]  # reverse the direction
-    avaliable_fmaps = subject_data.get("fmap")
-    if not avaliable_fmaps:
-        raise FileNotFoundError(f"No fieldmap found for <{dwi_file}>")
-    for fmap in avaliable_fmaps:
-        fmap_entities = parse_file_entities(fmap)
-        if (
-            fmap_entities["direction"] == fmap_dir
-            and fmap_entities["session"] == dwi_entities["session"]
-        ):
-            return fmap
-    raise FileNotFoundError(f"No fieldmap found for <{dwi_file}>")
-
 
 def init_dwi_preproc_wf(
+    output_directory: Union[str, Path],
     dwi_file: Union[str, Path],
     subject_data: dict,
     layout: BIDSLayout,
@@ -85,6 +52,8 @@ def init_dwi_preproc_wf(
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
+                # General
+                "output_directory",
                 # DWI related
                 "dwi_file",
                 "dwi_bvec",
@@ -102,6 +71,8 @@ def init_dwi_preproc_wf(
         ),
         name="inputnode",
     )
+    # Set up general
+    inputnode.inputs.output_directory = Path(output_directory)
     # Set up DWI
     inputnode.inputs.dwi_file = Path(dwi_file)
     inputnode.inputs.dwi_bvec = Path(layout.get_bvec(dwi_file))
@@ -280,57 +251,57 @@ def init_dwi_preproc_wf(
             ),
         ]
     )
+    ds_workflow = init_derivatives_wf()
+
+    workflow.connect(
+        [
+            (
+                inputnode,
+                ds_workflow,
+                [
+                    ("output_directory", "inputnode.output_directory"),
+                    ("dwi_file", "inputnode.source_file"),
+                ],
+            ),
+            (
+                post_eddy,
+                ds_workflow,
+                [
+                    ("outputnode.dwi_preproc", "inputnode.dwi_preproc"),
+                    ("outputnode.dwi_grad", "inputnode.dwi_grad"),
+                    ("outputnode.dwi_bvec", "inputnode.dwi_bvec"),
+                    ("outputnode.dwi_bval", "inputnode.dwi_bval"),
+                    ("outputnode.dwi_json", "inputnode.dwi_json"),
+                    ("outputnode.dwi_reference", "inputnode.dwi_reference"),
+                    (
+                        "outputnode.dwi_reference_json",
+                        "inputnode.dwi_reference_json",
+                    ),
+                ],
+            ),
+            (
+                coreg_wf,
+                ds_workflow,
+                [
+                    ("outputnode.dwi_brain_mask", "inputnode.dwi_brain_mask"),
+                    ("outputnode.dwi2t1w_aff", "inputnode.dwi2t1w_aff"),
+                    ("outputnode.t1w2dwi_aff", "inputnode.t1w2dwi_aff"),
+                ],
+            ),
+            (
+                sdc_report,
+                ds_workflow,
+                [("out_report", "inputnode.sdc_report")],
+            ),
+            (
+                coreg_report,
+                ds_workflow,
+                [("out_report", "inputnode.coreg_report")],
+            ),
+        ]
+    )
+
     return workflow
-    # ds_workflow = init_derivatives_wf()
-
-    # workflow.connect(
-    #     [
-    #         (
-    #             inputnode,
-    #             ds_workflow,
-    #             [
-    #                 ("dwi_file", "inputnode.source_file"),
-    #             ],
-    #         ),
-    #         (
-    #             post_eddy,
-    #             ds_workflow,
-    #             [
-    #                 ("outputnode.dwi_preproc", "inputnode.dwi_preproc"),
-    #                 ("outputnode.dwi_grad", "inputnode.dwi_grad"),
-    #                 ("outputnode.dwi_bvec", "inputnode.dwi_bvec"),
-    #                 ("outputnode.dwi_bval", "inputnode.dwi_bval"),
-    #                 ("outputnode.dwi_json", "inputnode.dwi_json"),
-    #                 ("outputnode.dwi_reference", "inputnode.dwi_reference"),
-    #                 (
-    #                     "outputnode.dwi_reference_json",
-    #                     "inputnode.dwi_reference_json",
-    #                 ),
-    #             ],
-    #         ),
-    #         (
-    #             coreg_wf,
-    #             ds_workflow,
-    #             [
-    #                 ("outputnode.dwi_brain_mask", "inputnode.dwi_brain_mask"),
-    #                 ("outputnode.dwi2t1w_aff", "inputnode.dwi2t1w_aff"),
-    #                 ("outputnode.t1w2dwi_aff", "inputnode.t1w2dwi_aff"),
-    #             ],
-    #         ),
-    #         (
-    #             sdc_report,
-    #             ds_workflow,
-    #             [("out_report", "inputnode.sdc_report")],
-    #         ),
-    #         (
-    #             coreg_report,
-    #             ds_workflow,
-    #             [("out_report", "inputnode.coreg_report")],
-    #         ),
-    #     ]
-    # )
-
-    # return workflow
 
 
 def _get_wf_name(filename):

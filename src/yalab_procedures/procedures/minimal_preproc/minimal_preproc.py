@@ -117,8 +117,9 @@ class MinimalPreprocProcedure(Procedure):
         """
         subject_data, _ = self._collect_subject_data()
         wf = init_minimal_preproc_wf(
-            self._gen_wf_name(),
+            subject_id=self.inputs.subject_id,
             subject_data=subject_data,
+            name=self._gen_wf_name(),
         )
         wf.base_dir = (
             self.inputs.work_directory

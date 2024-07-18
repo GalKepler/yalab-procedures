@@ -53,7 +53,7 @@ def init_dwi_coregister_wf(name: str = "dwi_coregister_wf") -> pe.Workflow:
 
     filrt_node = pe.Node(
         fsl.FLIRT(
-            dof=6,
+            dof=12,
             out_file="dwi2t1w.nii.gz",
             out_matrix_file="dwi2t1w.mat",
             searchr_x=[-90, 90],

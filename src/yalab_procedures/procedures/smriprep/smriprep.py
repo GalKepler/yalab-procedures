@@ -330,6 +330,8 @@ class SmriprepProcedure(Procedure, CommandLine):
         """
         return [
             session.name.split("-")[-1]
-            for session in Path(self.inputs.input_directory).glob("ses-*")
+            for session in Path(self.inputs.input_directory).glob(
+                f"sub-{self.inputs.participant_label}/ses-*"
+            )
             if session.is_dir()
         ]
