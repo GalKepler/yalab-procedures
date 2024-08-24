@@ -31,7 +31,7 @@ pre-commit = "^3.7.1"
 chardet = "^5.2.0"
 sphinx-rtd-theme = "^2.0.0"
 
-nipype = "^1.8.6"
+nipype = {git = "git@github.com:nipy/nipype.git"}
 pydicom = "^2.4.4"
 bids-validator = "^1.14.6"
 heudiconv = "^1.1.6"
@@ -44,6 +44,7 @@ keprep = "^0.2.0"
 setuptools = "^72.0.0"
 neuroflow-yalab = "^0.1.4"
 
+kepost = "0.1.0"
 [tool.poetry.dev-dependencies]
 coverage = "^7.5.4"  # testing
 mypy = "^1.10.0"  # linting

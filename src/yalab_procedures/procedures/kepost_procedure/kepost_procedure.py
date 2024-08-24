@@ -3,11 +3,10 @@ import os.path as op
 from pathlib import Path
 from typing import Any
 
-import keprep
-from keprep import config, data
-from keprep.config import init_spaces
-from keprep.data.quality_assurance.reports import build_boilerplate, run_reports
-from keprep.workflows.base.workflow import init_keprep_wf
+import kepost
+from kepost import config, data
+from kepost.data.quality_assurance.reports import build_boilerplate, run_reports
+from kepost.workflows.base import init_kepost_wf
 from nipype.interfaces.base import Directory, File, isdefined, traits
 from niworkflows.engine.workflows import LiterateWorkflow as Workflow
 
@@ -16,10 +15,10 @@ from yalab_procedures.procedures.base.procedure import (
     ProcedureInputSpec,
     ProcedureOutputSpec,
 )
-from yalab_procedures.procedures.keprep_procedure.templates.inputs import INPUTS_MAPPING
+from yalab_procedures.procedures.kepost_procedure.templates.inputs import INPUTS_MAPPING
 
 
-class KePrepInputSpec(ProcedureInputSpec):
+class KePostInputSpec(ProcedureInputSpec):
     """
     Input specification for the KePrepProcedure
     """
@@ -28,27 +27,17 @@ class KePrepInputSpec(ProcedureInputSpec):
     input_directory = Directory(
         exists=True,
         mandatory=True,
-        desc="Input directory containing raw data in BIDS format",
+        desc="Input directory containing preprocessed data (by KePrep)",
     )
     output_directory = Directory(
         exists=False,
         mandatory=True,
-        desc="Path to store outputs of KePrep.",
+        desc="Path to store outputs of KePost.",
     )
-    anat_derivatives = Directory(
+    keprep_database_dir = Directory(
         exists=False,
         mandatory=False,
-        desc="Directory to store anatomical derivatives",
-    )
-    bids_database_dir = Directory(
-        exists=False,
-        mandatory=False,
-        desc="Directory containing SQLite database indices for the input BIDS dataset.",
-    )
-    bids_filters = traits.File(
-        exists=True,
-        argstr="-v %s:/bids_filters.json",
-        desc="BIDS filter file",
+        desc="Directory containing SQLite database indices for the input KePrep dataset.",
     )
     reset_database = traits.Bool(
         True,
@@ -77,52 +66,112 @@ class KePrepInputSpec(ProcedureInputSpec):
         argstr="-v %s:/work",
         desc="Path to work directory",
     )
-    output_spaces = traits.List(
-        traits.Str,
-        argstr="--output-spaces %s",
-        desc="Output spaces",
-        sep=",",
-    )
     # Workflow configuration
     anat_only = traits.Bool(
         False,
         usedefault=True,
         desc="Whether to run anatomical processing only",
     )
-    dwi2t1w_dof = traits.Int(
-        6,
+    five_tissue_type_algorithm = traits.Enum(
+        "hsvs",
+        "fsl",
         usedefault=True,
-        desc="Degrees of freedom for the DWI-to-T1w registration",
+        desc="Algorithm to use for five tissue-type segmentation",
     )
-    dwi2t1w_init = traits.Str(
-        "header",
+    gm_probseg_threshold = traits.Float(
+        0.0001,
         usedefault=True,
-        desc="Initialization for the DWI-to-T1w registration",
+        desc="Threshold for gray matter segmentation",
     )
-    do_reconall = traits.Bool(
+    atlases = traits.List(
+        traits.Str,
+        usedefault=True,
+        desc="List of atlases to use for registration",
+    )
+    tensor_max_bval = traits.Int(
+        1000,
+        usedefault=True,
+        desc="Maximum b-value for tensor estimation",
+    )
+    dipy_reconstruction_method = traits.Enum(
+        "NLLS",
+        "RESTORE",
+        usedefault=True,
+        desc="Method to use for dipy reconstruction",
+    )
+    dipy_reconstruction_sigma = traits.Float(
+        desc="Sigma for dipy reconstruction",
+        mandatory=False,
+    )
+    parcellate_gm = traits.Bool(
         True,
         usedefault=True,
-        desc="Whether to run FreeSurfer recon-all",
+        desc="Whether to parcellate gray matter",
     )
-    longitudinal = traits.Bool(
+    response_algorithm = traits.Enum(
+        "dhollander",
+        "manual",
+        "msmt_5tt",
+        "tax",
+        "tournier",
+        usedefault=True,
+        desc="Algorithm to use for response estimation",
+    )
+    fod_algorithm = traits.Enum(
+        "msmt_csd",
+        "csd",
+        usedefault=True,
+        desc="Algorithm to use for FOD estimation",
+    )
+    n_raw_tracts = traits.Int(
+        1000000,
+        usedefault=True,
+        desc="Number of streamlines to generate in the tractography.",
+    )
+    n_tracts = traits.Int(
+        100000,
+        usedefault=True,
+        desc="Number of streamlines to keep after SIFT filtering.",
+    )
+    det_tracking_algorithm = traits.Enum(
+        "SD_Stream",
+        usedefault=True,
+        desc="Algorithm to use for deterministic tracking",
+    )
+    prob_tracking_algorithm = traits.Enum(
+        "iFOD2",
+        usedefault=True,
+        desc="Algorithm to use for probabilistic tracking",
+    )
+    tracking_max_angle = traits.Float(
+        45,
+        usedefault=True,
+        desc="Maximum angle between steps in tractography.",
+    )
+    tracking_lenscale_min = traits.Float(
+        30,
+        usedefault=True,
+        desc="Minimum length scale for tractography.",
+    )
+    tracking_lenscale_max = traits.Float(
+        500,
+        usedefault=True,
+        desc="Maximum length scale for tractography.",
+    )
+    tracking_stepscale = traits.Float(
+        0.2,
+        usedefault=True,
+        desc="Step scale for tractography.",
+    )
+    fs_scale_gm = traits.Bool(
         True,
-        argstr="--longitudinal",
-        desc="Longitudinal processing. May increase runtime.",
+        usedefault=True,
+        desc="Heuristically downsize the fibre density estimates based on the presence of GM in the voxel",
     )
-    skull_strip_fixed_seed = traits.Bool(
+    debug_sift = traits.Bool(
         False,
         usedefault=True,
-        desc="Whether to use a fixed seed for skull stripping",
-    )
-    skull_strip_template = traits.Str(
-        "OASIS30ANTs",
-        usedefault=True,
-        desc="Template for skull stripping",
-    )
-    hires = traits.Bool(
-        True,
-        usedefault=True,
-        desc="Whether to run the high-resolution workflow",
+        desc="Whether to run SIFT in debug mode",
     )
     # Nipype configuration
     crashfile_format = traits.Enum(
@@ -157,22 +206,22 @@ class KePrepInputSpec(ProcedureInputSpec):
     )
 
 
-class KePrepOutputSpec(ProcedureOutputSpec):
+class KePostOutputSpec(ProcedureOutputSpec):
     """
-    Output specification for the KePrepProcedure
-    """
-
-    output_directory = Directory(desc="KePrep output directory")
-
-
-class KePrepProcedure(Procedure):
-    """
-    Procedure for running Smriprep
+    Output specification for the KePostProcedure
     """
 
-    input_spec = KePrepInputSpec
-    output_spec = KePrepOutputSpec
-    _version = keprep.__version__
+    output_directory = Directory(desc="KePost output directory")
+
+
+class KePostProcedure(Procedure):
+    """
+    Procedure for running KePost
+    """
+
+    input_spec = KePostInputSpec
+    output_spec = KePostOutputSpec
+    _version = kepost.__version__
 
     def __init__(self, **inputs: Any):
         super().__init__(**inputs)
@@ -216,7 +265,7 @@ class KePrepProcedure(Procedure):
             If the command fails to run. The error message will be logged.
         """
 
-        self.logger.info("Running KePrepProcedure")
+        self.logger.info("Running KePostProcedure")
         self.logger.debug(f"Input attributes: {kwargs}")
 
         # Locate the FreeSurfer license file
@@ -224,12 +273,9 @@ class KePrepProcedure(Procedure):
         # Prepare inputs
         configuration_dict = self._setup_config_toml()
         config.from_dict(configuration_dict)
-        init_spaces()
 
         # Run the workflow
-        workflow = init_keprep_wf()
-        if self.inputs.write_graph:
-            workflow.write_graph(graph2use="colored", format="png", simple_form=True)
+        workflow = init_kepost_wf()
         workflow.run()
         self._generate_reports(workflow=workflow, configuration_dict=configuration_dict)
 
@@ -240,12 +286,12 @@ class KePrepProcedure(Procedure):
         run_uuid = config.execution.run_uuid
         for participant_label in self.inputs.participant_label:
             err = run_reports(
-                config.execution.keprep_dir,
+                config.execution.output_dir,
                 participant_label,
                 run_uuid,
                 bootstrap_file=bootstrap_file,
                 out_filename="report.html",
-                reportlets_dir=config.execution.keprep_dir,
+                reportlets_dir=config.execution.output_dir,
                 errorname=f"report-{run_uuid}-{participant_label}.err",
                 subject=participant_label,
             )
