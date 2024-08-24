@@ -31,7 +31,7 @@ pre-commit = "^3.7.1"
 chardet = "^5.2.0"
 sphinx-rtd-theme = "^2.0.0"
 
-nipype = {git = "git@github.com:nipy/nipype.git"}
+nipype = {git = "https://github.com/nipy/nipype.git"}
 pydicom = "^2.4.4"
 bids-validator = "^1.14.6"
 heudiconv = "^1.1.6"

@@ -348,3 +348,13 @@ class KePostProcedure(Procedure):
             for session in Path(self.inputs.input_directory).glob("ses-*")
             if session.is_dir()
         ]
+
+
+if __name__ == "__main__":
+    task = KePostProcedure()
+    task.inputs.input_directory = "/media/storage/yalab-dev/derivatives/keprep"
+    task.inputs.output_directory = "/media/storage/yalab-dev/derivatives/kepost"
+    task.inputs.atlases = ["fan2016"]
+    task.inputs.participant_label = ["CLMC10"]
+    task.inputs.work_directory = "/media/storage/yalab-dev/work"
+    res = task.run()
