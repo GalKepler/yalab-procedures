@@ -45,6 +45,11 @@ class MrtrixPreprocessingInputSpec(ProcedureInputSpec):
         mandatory=True,
         desc="Output directory",
     )
+    final_output_directory = Directory(
+        exists=False,
+        mandatory=False,
+        desc="Final output directory",
+    )
     work_directory = Directory(
         exists=False,
         mandatory=True,
@@ -105,6 +110,19 @@ class MrtrixPreprocessingProcedure(Procedure, CommandLine):
         self.logger.info("Running preprocessing workflow.")
         comis_cortical = init_comis_cortical_wf(wf)
         comis_cortical.run()
+
+    def move_output_directory(self):
+        """
+        Move the output directory to the final output directory
+        """
+        if isdefined(self.inputs.final_output_directory):
+            self.logger.info("Moving output directory to final output directory.")
+            Path(self.inputs.output_directory).rename(
+                self.inputs.final_output_directory
+            )
+            self.outputs.output_directory = self.inputs.final_output_directory
+        else:
+            self.outputs.output_directory = self.inputs.output_directory
 
     def initiate_prepare_inputs_workflow(self):
         """
