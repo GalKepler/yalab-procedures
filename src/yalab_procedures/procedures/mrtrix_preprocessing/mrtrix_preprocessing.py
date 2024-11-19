@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import git
@@ -113,8 +114,16 @@ class MrtrixPreprocessingProcedure(Procedure, CommandLine):
 
     def move_output_directory(self):
         """
-        Move the output directory to the final output directory
+        Change permissions and move the output directory to the final output directory.
         """
+        # change permissions
+        src_path = Path(self.inputs.output_directory)
+        for root, dirs, files in os.walk(src_path):
+            for directory in dirs:
+                os.chmod(Path(root) / directory, 0o755)  # Directories: rwxr-xr-x
+            for file in files:
+                os.chmod(Path(root) / file, 0o644)  # Files: rw-r--r--
+        self.logger.info(f"Permissions changed for '{src_path}'")
         if isdefined(self.inputs.final_output_directory):
             self.logger.info("Moving output directory to final output directory.")
             Path(self.inputs.output_directory).rename(
