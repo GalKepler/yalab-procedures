@@ -227,57 +227,59 @@ def infotodict(
             or "SE_rsfMRI_FieldMap_PA" in s.protocol_name
         ):
             info[fmap_pa].append(s.series_id)
-        elif "rsfMRI_AP" in s.protocol_name:
-            info[rest].append(s.series_id)
-        elif "rsfMRI_AP_SBRef" in s.protocol_name:
-            info[rest_sbref].append(s.series_id)
-        elif "fMRI_BJJ1_AP" in s.protocol_name:
-            info[bjj1].append(s.series_id)
-        elif "fMRI_BJJ1_AP_SBRef" in s.protocol_name:
-            info[bjj1_sbref].append(s.series_id)
-        elif "fMRI_BJJ2_AP" in s.protocol_name:
-            info[bjj2].append(s.series_id)
-        elif "fMRI_BJJ2_AP_SBRef" in s.protocol_name:
-            info[bjj2_sbref].append(s.series_id)
-        elif "fMRI_BJJ3_AP" in s.protocol_name:
-            info[bjj3].append(s.series_id)
-        elif "fMRI_BJJ3_AP_SBRef" in s.protocol_name:
-            info[bjj3_sbref].append(s.series_id)
-        elif "fMRI_Climbing1_AP" in s.protocol_name:
-            info[climbing1].append(s.series_id)
-        elif "fMRI_Climbing1_AP_SBRef" in s.protocol_name:
-            info[climbing1_sbref].append(s.series_id)
-        elif "fMRI_Climbing2_AP" in s.protocol_name:
-            info[climbing2].append(s.series_id)
-        elif "fMRI_Climbing2_AP_SBRef" in s.protocol_name:
-            info[climbing2_sbref].append(s.series_id)
-        elif "fMRI_Climbing3_AP" in s.protocol_name:
-            info[climbing3].append(s.series_id)
-        elif "fMRI_Climbing3_AP_SBRef" in s.protocol_name:
-            info[climbing3_sbref].append(s.series_id)
-        elif "fMRI_Music1_AP" in s.protocol_name:
-            info[music1].append(s.series_id)
-        elif "fMRI_Music1_AP_SBRef" in s.protocol_name:
-            info[music1_sbref].append(s.series_id)
-        elif "fMRI_Music2_AP" in s.protocol_name:
-            info[music2].append(s.series_id)
-        elif "fMRI_Music2_AP_SBRef" in s.protocol_name:
-            info[music2_sbref].append(s.series_id)
-        elif "fMRI_Music3_AP" in s.protocol_name:
-            info[music3].append(s.series_id)
-        elif "fMRI_Music3_AP_SBRef" in s.protocol_name:
-            info[music3_sbref].append(s.series_id)
-        elif ("fMRI_Music_Movement1_AP" in s.protocol_name) and ("SBRef" not in s.protocol_name):
-            info[movement1].append(s.series_id)
-        elif "fMRI_Music_Movement1_AP_SBRef" in s.protocol_name:
-            info[movement1_sbref].append(s.series_id)
-        elif ("fMRI_Music_Movement2_AP" in s.protocol_name) and ("SBRef" not in s.protocol_name):
-            info[movement2].append(s.series_id)
-        elif "fMRI_Music_Movement2_AP_SBRef" in s.protocol_name:
-            info[movement2_sbref].append(s.series_id)
-        elif "fMRI_EmotionalNBack_AP" in s.protocol_name:
-            info[emotionalnback].append(s.series_id)
-        elif "fMRI_EmotionalNBack_AP_SBRef" in s.protocol_name:
-            info[emotionalnback_sbref].append(s.series_id)
+        if "sbref" in s.protocol_name.lower():
+            if "rsfMRI_AP_SBRef" in s.protocol_name:
+                info[rest_sbref].append(s.series_id)
+            elif "fMRI_BJJ1_AP_SBRef" in s.protocol_name:
+                info[bjj1_sbref].append(s.series_id)
+            elif "fMRI_BJJ2_AP_SBRef" in s.protocol_name:
+                info[bjj2_sbref].append(s.series_id)
+            elif "fMRI_BJJ3_AP_SBRef" in s.protocol_name:
+                info[bjj3_sbref].append(s.series_id)
+            elif "fMRI_Climbing1_AP_SBRef" in s.protocol_name:
+                info[climbing1_sbref].append(s.series_id)
+            elif "fMRI_Climbing2_AP_SBRef" in s.protocol_name:
+                info[climbing2_sbref].append(s.series_id)
+            elif "fMRI_Climbing3_AP_SBRef" in s.protocol_name:
+                info[climbing3_sbref].append(s.series_id)
+            elif "fMRI_Music1_AP_SBRef" in s.protocol_name:
+                info[music1_sbref].append(s.series_id)
+            elif "fMRI_Music2_AP_SBRef" in s.protocol_name:
+                info[music2_sbref].append(s.series_id)
+            elif "fMRI_Music3_AP_SBRef" in s.protocol_name:
+                info[music3_sbref].append(s.series_id)
+            elif "fMRI_Music_Movement1_AP_SBRef" in s.protocol_name:
+                info[movement1_sbref].append(s.series_id)
+            elif "fMRI_Music_Movement2_AP_SBRef" in s.protocol_name:
+                info[movement2_sbref].append(s.series_id)
+            elif "fMRI_EmotionalNBack_AP_SBRef" in s.protocol_name:
+                info[emotionalnback_sbref].append(s.series_id)
+        else:
+            if "rsfMRI_AP" in s.protocol_name:
+                info[rest].append(s.series_id)
+            elif "fMRI_BJJ1_AP" in s.protocol_name:
+                info[bjj1].append(s.series_id)
+            elif "fMRI_BJJ2_AP" in s.protocol_name:
+                info[bjj2].append(s.series_id)
+            elif "fMRI_BJJ3_AP" in s.protocol_name:
+                info[bjj3].append(s.series_id)
+            elif "fMRI_Climbing1_AP" in s.protocol_name:
+                info[climbing1].append(s.series_id)
+            elif "fMRI_Climbing2_AP" in s.protocol_name:
+                info[climbing2].append(s.series_id)
+            elif "fMRI_Climbing3_AP" in s.protocol_name:
+                info[climbing3].append(s.series_id)
+            elif "fMRI_Music1_AP" in s.protocol_name:
+                info[music1].append(s.series_id)
+            elif "fMRI_Music2_AP" in s.protocol_name:
+                info[music2].append(s.series_id)
+            elif "fMRI_Music3_AP" in s.protocol_name:
+                info[music3].append(s.series_id)
+            elif "fMRI_Music_Movement1_AP" in s.protocol_name:
+                info[movement1].append(s.series_id)
+            elif "fMRI_Music_Movement2_AP" in s.protocol_name:
+                info[movement2].append(s.series_id)
+            elif "fMRI_EmotionalNBack_AP" in s.protocol_name:
+                info[emotionalnback].append(s.series_id)
 
     return info
